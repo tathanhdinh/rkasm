@@ -12,15 +12,10 @@ static APPLICATION_ABOUT: &'static str = "A x86 assembler";
 
 static ARGUMENT_ASM: &'static str = "x86 assembly";
 static ARGUMENT_BASE: &'static str = "base address";
+static ARGUMENT_MODE: &'static str = "assembling mode";
 
 fn main() {
     // println!("Hello, world!");
-    let engine = keystone::Keystone::new(keystone::Arch::X86, 
-                                         keystone::MODE_LITTLE_ENDIAN | keystone::MODE_32)
-        .expect("could not initialize Keystone engine");
-    engine.option(keystone::OptionType::SYNTAX, keystone::OPT_SYNTAX_NASM)
-        .expect("could not set option to nasm syntax");
-
     let matches = clap::App::new(APPLICATION_NAME)
         .version(APPLICATION_VERSION)
         .author(APPLICATION_AUTHOR)
@@ -33,7 +28,31 @@ fn main() {
              .long("base")
              .takes_value(true)
              .default_value("0"))
+        .arg(clap::Arg::with_name(ARGUMENT_MODE)
+             .short("m")
+             .long("mode")
+             .takes_value(true)
+             .default_value("x64"))
         .get_matches();
+
+    let asm_mode = if matches.is_present(ARGUMENT_MODE) {
+        match matches.value_of(ARGUMENT_MODE).unwrap() {
+            "x32" => {
+                keystone::MODE_32
+            },
+            "x64" => {
+                keystone::MODE_64
+            },
+            _ => {
+                // keystone::MODE_64
+                println!("{}", "bad assembling mode (should be either x32 or x64)");
+                return;
+            }
+        }
+    }
+    else {
+        keystone::MODE_64
+    };
 
     let base_address = if matches.is_present(ARGUMENT_BASE) {
         value_t!(matches, ARGUMENT_BASE, u64).unwrap_or(0x0)
@@ -42,7 +61,13 @@ fn main() {
         0x0
     };
 
-    let asm_code = matches.value_of(ARGUMENT_ASM).unwrap(); // should not panic
+    let engine = keystone::Keystone::new(keystone::Arch::X86, 
+                                         keystone::MODE_LITTLE_ENDIAN | asm_mode)
+        .expect("could not initialize Keystone engine");
+    engine.option(keystone::OptionType::SYNTAX, keystone::OPT_SYNTAX_NASM)
+        .expect("could not set option to nasm syntax");
+
+    let asm_code = matches.value_of(ARGUMENT_ASM).unwrap(); // should not panic since required
     let asm_code: Vec<_> = asm_code.split(';').collect();
     let asm_code: Vec<_> = asm_code.into_iter().map(|ins| ins.trim()).collect();
 
