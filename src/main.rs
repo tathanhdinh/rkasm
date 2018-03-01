@@ -72,21 +72,34 @@ fn main() {
     let asm_code: Vec<_> = asm_code.into_iter().map(|ins| ins.trim()).collect();
 
     let mut asm_results: Vec<_> = Vec::new();
+    let mut asm_result;
     let mut ins_base_address = base_address;
     for ins in asm_code {
-        if let Ok(asm_result) = engine.asm(ins.to_string(), ins_base_address) {
-            let opcode_len = asm_result.bytes.len();
-            let opcode_strs: Vec<_> = asm_result.bytes
-                .into_iter()
-                .map(|opc| format!("{:02x}", opc) )
-                .collect();
-            let opcode_string = opcode_strs.join(" ");
-            let asm_result = format!("0x{:016x}\t{}\t{}", ins_base_address, &opcode_string, ins);
-            asm_results.push(asm_result);
+        let assembling_result = 
+            if let Ok(result) = engine.asm(ins.to_string(), ins_base_address) {
+                let opcode_len = result.bytes.len();
+                let opcode_strs: Vec<_> = result.bytes
+                    .into_iter()
+                    .map(|opc| format!("{:02x}", opc) )
+                    .collect();
+                let opcode_string = opcode_strs.join(" ");
+                
+                asm_result = format!("0x{:016x}\t{}\t{}", ins_base_address, &opcode_string, ins);
+                // asm_results.push(asm_result);
+                // Ok(format!("0x{:016x}\t{}\t{}", ins_base_address, &opcode_string, ins))
+                ins_base_address += opcode_len as u64;
+                Ok(())
+            }
+            else {
+                asm_result = format!("0x{:x}\t{}\t{}", ins_base_address, "error", ins);
+                // asm_results.push(asm_result);
+                // break;
+                // Err(format!("0x{:016x}\t{}\t{}", ins_base_address, "error", ins))
+                Err(())
+            };
 
-            ins_base_address += opcode_len as u64;
-        }
-        else {
+        asm_results.push(asm_result);
+        if assembling_result.is_err() {
             break;
         }
     }
