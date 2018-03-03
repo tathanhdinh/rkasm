@@ -84,7 +84,7 @@ fn main() {
                     .collect();
                 let opcode_string = opcode_strs.join(" ");
                 
-                asm_result = format!("0x{:016x}\t{}\t{}", ins_base_address, &opcode_string, ins);
+                asm_result = format!("0x{:x}\t{}\t{}", ins_base_address, &opcode_string, ins);
                 // asm_results.push(asm_result);
                 // Ok(format!("0x{:016x}\t{}\t{}", ins_base_address, &opcode_string, ins))
                 ins_base_address += opcode_len as u64;
