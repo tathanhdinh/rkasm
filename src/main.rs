@@ -80,7 +80,7 @@ fn main() {
                 let opcode_len = result.bytes.len();
                 let opcode_strs: Vec<_> = result.bytes
                     .into_iter()
-                    .map(|opc| format!("{:02x}", opc) )
+                    .map(|opc| format!("{:02x}", opc))
                     .collect();
                 let opcode_string = opcode_strs.join(" ");
                 
