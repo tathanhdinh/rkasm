@@ -38,10 +38,10 @@ fn main() {
     let asm_mode = if matches.is_present(ARGUMENT_MODE) {
         match matches.value_of(ARGUMENT_MODE).unwrap() {
             "x32" => {
-                keystone::MODE_32
+                keystone::gen::KS_MODE_32
             },
             "x64" => {
-                keystone::MODE_64
+                keystone::gen::KS_MODE_64
             },
             _ => {
                 // keystone::MODE_64
@@ -51,7 +51,7 @@ fn main() {
         }
     }
     else {
-        keystone::MODE_64
+        keystone::gen::KS_MODE_64
     };
 
     let base_address = if matches.is_present(ARGUMENT_BASE) {
@@ -61,11 +61,10 @@ fn main() {
         0x0
     };
 
-    let engine = keystone::Keystone::new(keystone::Arch::X86, 
-                                         keystone::MODE_LITTLE_ENDIAN | asm_mode)
+    let engine = keystone::Keystone::new(keystone::gen::KS_ARCH_X86, asm_mode)
         .expect("could not initialize Keystone engine");
-    engine.option(keystone::OptionType::SYNTAX, keystone::OPT_SYNTAX_NASM)
-        .expect("could not set option to nasm syntax");
+    engine.option(keystone::gen::KS_OPT_SYNTAX, keystone::gen::KS_OPT_SYNTAX_NASM)
+        .expect("could not set option to NASM syntax");
 
     let asm_code = matches.value_of(ARGUMENT_ASM).unwrap(); // should not panic since required
     let asm_code: Vec<_> = asm_code.split(';').collect();
@@ -76,9 +75,9 @@ fn main() {
     let mut ins_base_address = base_address;
     for ins in asm_code {
         let assembling_result = 
-            if let Ok(result) = engine.asm(ins.to_string(), ins_base_address) {
-                let opcode_len = result.bytes.len();
-                let opcode_strs: Vec<_> = result.bytes
+            if let Ok(result) = engine.asm(ins, ins_base_address) {
+                let opcode_len = result.encoding.len();
+                let opcode_strs: Vec<_> = result.encoding
                     .into_iter()
                     .map(|opc| format!("{:02x}", opc) )
                     .collect();
