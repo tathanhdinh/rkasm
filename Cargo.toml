@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["tathanhdinh"]
 
 [dependencies]
-keystone = "*"
+# keystone = "*"
+keystone = { path = "../keystone/bindings/rust" }
 clap = "*"
 tabwriter = "*"

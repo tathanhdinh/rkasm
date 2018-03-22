@@ -59,8 +59,7 @@ fn main() {
         0x0
     };
 
-    let engine = keystone::Keystone::new(keystone::Arch::X86, 
-                                         keystone::MODE_LITTLE_ENDIAN | asm_mode)
+    let engine = keystone::Keystone::new(keystone::Arch::X86, asm_mode)
         .expect("could not initialize Keystone engine");
     engine.option(keystone::OptionType::SYNTAX, keystone::OPT_SYNTAX_NASM)
         .expect("could not set option to nasm syntax");
@@ -76,6 +75,7 @@ fn main() {
         let assembling_result = 
             if let Ok(assembled_ins) = engine.asm(ins.to_string(), ins_base_address) {
                 let opcode_len = assembled_ins.bytes.len();
+                println!("length {}", opcode_len);
                 let opcode_strs: Vec<_> = assembled_ins.bytes
                     .into_iter()
                     .map(|opc| format!("{:02x}", opc))
