@@ -73,7 +73,7 @@ fn main() {
     let mut ins_base_address = base_address;
     for ins in asm_code {
         let assembling_result = 
-            if let Ok(assembled_ins) = engine.asm(ins.to_string(), ins_base_address) {
+            if let Ok(assembled_ins) = engine.asm(ins, ins_base_address) {
                 let opcode_len = assembled_ins.encoding.len();
                 let opcode_strs: Vec<_> = assembled_ins.encoding
                     .into_iter()
