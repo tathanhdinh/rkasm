@@ -6,5 +6,6 @@ authors = ["tathanhdinh"]
 [dependencies]
 keystone = { git = "https://github.com/tathanhdinh/keystone-rs.git" }
 # keystone = { path = "../keystone-rs" }
-clap = "*"
-tabwriter = "*"
+clap = { git = "https://github.com/kbknapp/clap-rs.git" }
+tabwriter = { git = "https://github.com/BurntSushi/tabwriter.git" }
+failure = { git = "https://github.com/rust-lang-nursery/failure.git" }
