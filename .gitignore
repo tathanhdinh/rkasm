@@ -1,2 +1,4 @@
 target/**
 Cargo.lock
+keystone.*
+keystone_libs/**

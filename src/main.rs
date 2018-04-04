@@ -168,22 +168,26 @@ fn run() -> Result<(), failure::Error> {
         .expect("could not set option to NASM syntax");
 
     // let mut asm_code: Vec<&str> = vec![];
-    let input_file_reader;
-    let mut asm_code = vec![];
-    if matches.is_present(ARGUMENT_FILE) {
-        let input_file = std::fs::File::open(matches.value_of(ARGUMENT_FILE).unwrap())?;
-        input_file_reader = std::io::BufReader::new(input_file);
-        // input_file.lines().into_iter().map(|line| line?.trim()).collect();;
-        // for line in input_file_reader.lines() {
-        //     asm_code.push(line?.trim());
-        // }
-        let input_asm: Vec<_> = 
-    }
-    else {
-        let input_asm = matches.value_of(ARGUMENT_ASM).unwrap(); // should not panic since required
-        let input_asm: Vec<_> = input_asm.split(';').collect();
-        asm_code = input_asm.into_iter().map(|ins| ins.trim()).collect();
-    }
+    let lines;
+    // let mut asm_code = vec![];
+    let asm_code = 
+        if matches.is_present(ARGUMENT_FILE) {
+            let input_file = std::fs::File::open(matches.value_of(ARGUMENT_FILE).unwrap())?;
+            let input_file = std::io::BufReader::new(input_file);
+            // input_file.lines().into_iter().map(|line| line?.trim()).collect();;
+            // for line in input_file_reader.lines() {
+            //     asm_code.push(line?.trim());
+            // }
+            // let input_asm: Vec<_> = 
+            lines = input_file.lines().collect::<Result<Vec<String>, _>>()?;
+            lines.iter().map(|s| s.as_str().trim()).collect::<Vec<&str>>()
+            // asm_code = lines.iter().map(|s| s.trim()).collect::<Vec<&str>>();
+        }
+        else {
+            let input_asm = matches.value_of(ARGUMENT_ASM).unwrap(); // should not panic since required
+            let input_asm: Vec<_> = input_asm.split(';').collect();
+            input_asm.into_iter().map(|ins| ins.trim()).collect()
+        };
 
     let mut assembled_strings: Vec<_> = Vec::new();
     let mut assembled_ins_string;
