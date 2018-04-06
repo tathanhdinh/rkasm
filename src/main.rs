@@ -112,7 +112,10 @@ fn run() -> Result<(), failure::Error> {
             // }
             // let input_asm: Vec<_> = 
             lines = input_file.lines().collect::<Result<Vec<String>, _>>()?;
-            lines.iter().map(|s| s.as_str().trim()).collect::<Vec<&str>>()
+            lines.iter()
+                .map(|s| s.as_str().trim())
+                .take_while(|s| !s.starts_with(';'))
+                .collect::<Vec<&str>>()
             // asm_code = lines.iter().map(|s| s.trim()).collect::<Vec<&str>>();
         }
         else {
