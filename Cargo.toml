@@ -9,3 +9,5 @@ keystone = { git = "https://github.com/tathanhdinh/keystone-rs.git" }
 clap = { git = "https://github.com/kbknapp/clap-rs.git" }
 tabwriter = { git = "https://github.com/BurntSushi/tabwriter.git" }
 failure = { git = "https://github.com/rust-lang-nursery/failure.git" }
+syntect = { path = "../syntect" }
+pager = "*"

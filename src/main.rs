@@ -2,6 +2,8 @@
 
 extern crate keystone;
 extern crate tabwriter;
+extern crate syntect;
+extern crate pager;
 #[macro_use] extern crate clap;
 #[macro_use] extern crate failure;
 
@@ -19,6 +21,8 @@ static ARGUMENT_FILE: &'static str = "input x86 assembly file";
 static ARGUMENT_OUTPUT_FILE: &'static str = "output binary file";
 
 fn main() {
+    pager::Pager::with_pager("less -R").setup();
+
     if let Err(err) = run() {
         println!("{}", err);
     }
@@ -114,7 +118,7 @@ fn run() -> Result<(), failure::Error> {
             lines = input_file.lines().collect::<Result<Vec<String>, _>>()?;
             lines.iter()
                 .map(|s| s.as_str().trim())
-                .take_while(|s| !s.starts_with(';'))
+                .filter(|s| !s.starts_with(';') && !s.is_empty())
                 .collect::<Vec<&str>>()
             // asm_code = lines.iter().map(|s| s.trim()).collect::<Vec<&str>>();
         }
@@ -127,7 +131,7 @@ fn run() -> Result<(), failure::Error> {
     let mut assembled_strings: Vec<_> = Vec::new();
     let mut assembled_ins_string;
     let mut ins_base_address = base_address;
-    for ref ins in asm_code {
+    for ins in asm_code {
         let assembling_result = 
             if let Ok(assembled_ins) = engine.asm(&ins, ins_base_address) {
                 let opcode_len = assembled_ins.encoding.len();
@@ -166,11 +170,24 @@ fn run() -> Result<(), failure::Error> {
     let asm_results = assembled_strings.join("\r\n");
     // println!("{}", asm_results.len());
 
-    // let mut tw = tabwriter::TabWriter::new(Vec::new()).padding(2);
-    let mut tw = tabwriter::TabWriter::new(std::io::stdout()).padding(4);
+    let mut tw = tabwriter::TabWriter::new(Vec::new()).padding(4);
+    // let mut tw = tabwriter::TabWriter::new(std::io::stdout()).padding(4);
     // write!(&mut tw, &asm_results);
     writeln!(&mut tw, "{}", asm_results)?;
     tw.flush()?;
+
+    let written_strs = String::from_utf8(tw.into_inner()?)?;
+    let written_strs = written_strs.split("\r\n").collect::<Vec<&str>>();
+    let theme_set = syntect::highlighting::ThemeSet::load_defaults();
+    let theme = &theme_set.themes["Solarized (dark)"];
+    let syntax_set = syntect::parsing::SyntaxSet::load_defaults_nonewlines();
+    let syntax = syntax_set.find_syntax_by_extension("asm").unwrap_or_else(|| syntax_set.find_syntax_plain_text());
+    let mut highlighter = syntect::easy::HighlightLines::new(syntax, theme);
+    for line in written_strs {
+        let ranges: Vec<(syntect::highlighting::Style, &str)> = highlighter.highlight(line);
+        let escaped = syntect::util::as_24_bit_terminal_escaped(&ranges[..], true);
+        println!("{}", escaped);
+    }
 
     Ok(())
 }
