@@ -23,8 +23,20 @@ static ARGUMENT_OUTPUT_FILE: &'static str = "output binary file";
 fn main() {
     pager::Pager::with_pager("less -R").setup();
 
-    if let Err(err) = run() {
-        println!("{}", err);
+    // if let Err(err) = run() {
+    //     println!("{}", err);
+    // }
+
+    match run() {
+        Ok(()) => {},
+        Err(ref err) => {
+            if let Some(ref _err) = err.downcast_ref::<std::io::Error>() {
+                std::process::exit(0);
+            }
+            else {
+                println!("{}", err);
+            }
+        }
     }
 }
 
@@ -186,7 +198,8 @@ fn run() -> Result<(), failure::Error> {
     for line in written_strs {
         let ranges: Vec<(syntect::highlighting::Style, &str)> = highlighter.highlight(line);
         let escaped = syntect::util::as_24_bit_terminal_escaped(&ranges[..], true);
-        println!("{}", escaped);
+        // println!("{}", escaped);
+        writeln!(&mut std::io::stdout(), "{}", escaped)?;
     }
 
     Ok(())
