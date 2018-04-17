@@ -15,13 +15,14 @@ static APPLICATION_AUTHOR: &'static str = "TA Thanh Dinh <tathanhdinh@gmail.com>
 static APPLICATION_ABOUT: &'static str = "A simpler x86 assembler based on keystone";
 
 static ARGUMENT_ASM: &'static str = "x86 assembly";
-static ARGUMENT_BASE: &'static str = "base address";
+static ARGUMENT_BASE_ADDRESS: &'static str = "base address";
 static ARGUMENT_MODE: &'static str = "assembling mode";
 static ARGUMENT_FILE: &'static str = "input x86 assembly file";
 static ARGUMENT_OUTPUT_FILE: &'static str = "output binary file";
+static ARGUMENT_VERBOSE: &'static str = "show assembly code";
 
 fn main() {
-    pager::Pager::with_pager("less -R").setup();
+    // pager::Pager::with_pager("less -R").setup();
 
     // if let Err(err) = run() {
     //     println!("{}", err);
@@ -57,7 +58,7 @@ fn run() -> Result<(), failure::Error> {
              .short("o")
              .long("out")
              .takes_value(true))
-        .arg(clap::Arg::with_name(ARGUMENT_BASE)
+        .arg(clap::Arg::with_name(ARGUMENT_BASE_ADDRESS)
              .short("b")
              .long("base")
              .takes_value(true)
@@ -68,7 +69,16 @@ fn run() -> Result<(), failure::Error> {
              .takes_value(true)
              .default_value("x64")
              .possible_values(&["x64", "x32"]))
+        .arg(clap::Arg::with_name(ARGUMENT_VERBOSE)
+             .short("v")
+             .long("verbose"))
         .get_matches();
+
+    let verbose_mode = matches.is_present(ARGUMENT_VERBOSE);
+
+    if verbose_mode {
+        pager::Pager::with_pager("less -R").setup();
+    }
 
     let asm_mode = if matches.is_present(ARGUMENT_MODE) {
         match matches.value_of(ARGUMENT_MODE).unwrap() {
@@ -87,8 +97,8 @@ fn run() -> Result<(), failure::Error> {
         keystone::gen::KS_MODE_64
     };
 
-    let base_address = if matches.is_present(ARGUMENT_BASE) {
-        value_t!(matches, ARGUMENT_BASE, u64).unwrap_or(0x0)
+    let base_address = if matches.is_present(ARGUMENT_BASE_ADDRESS) {
+        value_t!(matches, ARGUMENT_BASE_ADDRESS, u64).unwrap_or(0x0)
     }
     else {
         0x0
@@ -142,6 +152,8 @@ fn run() -> Result<(), failure::Error> {
 
     let mut assembled_strings: Vec<_> = Vec::new();
     let mut assembled_ins_string;
+    //  = String::from("");
+    //  = &String::new();
     let mut ins_base_address = base_address;
     for ins in asm_code {
         let assembling_result = 
@@ -153,7 +165,13 @@ fn run() -> Result<(), failure::Error> {
                     .collect();
                 let opcode_string = opcode_strs.join(" ");
                 
-                assembled_ins_string = format!("0x{:x}\t{}\t{}", ins_base_address, &opcode_string, ins);
+                if verbose_mode {
+                    assembled_ins_string = format!("0x{:x}\t{}\t{}", ins_base_address, &opcode_string, ins);
+                }
+                else {
+                    assembled_ins_string = String::from("");
+                }
+                
                 // asm_results.push(asm_result);
                 // Ok(format!("0x{:016x}\t{}\t{}", ins_base_address, &opcode_string, ins))
                 ins_base_address += opcode_len as u64;
@@ -166,7 +184,14 @@ fn run() -> Result<(), failure::Error> {
                 Some(())
             }
             else {
-                assembled_ins_string = format!("0x{:x}\t{}\t{}", ins_base_address, "error", ins);
+                assembled_ins_string = 
+                    if verbose_mode {
+                        format!("0x{:x}\t{}\t{}", ins_base_address, "error", ins)
+                    }
+                    else {
+                        String::from("")
+                    };
+                
                 // asm_results.push(asm_result);
                 // break;
                 // Err(format!("0x{:016x}\t{}\t{}", ins_base_address, "error", ins))
@@ -174,32 +199,38 @@ fn run() -> Result<(), failure::Error> {
                 None
             };
 
-        assembled_strings.push(assembled_ins_string);
+        if verbose_mode {
+            assembled_strings.push(assembled_ins_string);
+        }
+        
         if assembling_result.is_none() {
             break;
         }
     }
-    let asm_results = assembled_strings.join("\r\n");
-    // println!("{}", asm_results.len());
 
-    let mut tw = tabwriter::TabWriter::new(Vec::new()).padding(4);
-    // let mut tw = tabwriter::TabWriter::new(std::io::stdout()).padding(4);
-    // write!(&mut tw, &asm_results);
-    writeln!(&mut tw, "{}", asm_results)?;
-    tw.flush()?;
+    if verbose_mode {
+        let asm_results = assembled_strings.join("\r\n");
+        // println!("{}", asm_results.len());
 
-    let written_strs = String::from_utf8(tw.into_inner()?)?;
-    let written_strs = written_strs.split("\r\n").collect::<Vec<&str>>();
-    let theme_set = syntect::highlighting::ThemeSet::load_defaults();
-    let theme = &theme_set.themes["Solarized (dark)"];
-    let syntax_set = syntect::parsing::SyntaxSet::load_defaults_nonewlines();
-    let syntax = syntax_set.find_syntax_by_extension("asm").unwrap_or_else(|| syntax_set.find_syntax_plain_text());
-    let mut highlighter = syntect::easy::HighlightLines::new(syntax, theme);
-    for line in written_strs {
-        let ranges: Vec<(syntect::highlighting::Style, &str)> = highlighter.highlight(line);
-        let escaped = syntect::util::as_24_bit_terminal_escaped(&ranges[..], true);
-        // println!("{}", escaped);
-        writeln!(&mut std::io::stdout(), "{}", escaped)?;
+        let mut tw = tabwriter::TabWriter::new(Vec::new()).padding(4);
+        // let mut tw = tabwriter::TabWriter::new(std::io::stdout()).padding(4);
+        // write!(&mut tw, &asm_results);
+        writeln!(&mut tw, "{}", asm_results)?;
+        tw.flush()?;
+
+        let written_strs = String::from_utf8(tw.into_inner()?)?;
+        let written_strs = written_strs.split("\r\n").collect::<Vec<&str>>();
+        let theme_set = syntect::highlighting::ThemeSet::load_defaults();
+        let theme = &theme_set.themes["Solarized (dark)"];
+        let syntax_set = syntect::parsing::SyntaxSet::load_defaults_nonewlines();
+        let syntax = syntax_set.find_syntax_by_extension("asm").unwrap_or_else(|| syntax_set.find_syntax_plain_text());
+        let mut highlighter = syntect::easy::HighlightLines::new(syntax, theme);
+        for line in written_strs {
+            let ranges: Vec<(syntect::highlighting::Style, &str)> = highlighter.highlight(line);
+            let escaped = syntect::util::as_24_bit_terminal_escaped(&ranges[..], true);
+            // println!("{}", escaped);
+            writeln!(&mut std::io::stdout(), "{}", escaped)?;
+        }
     }
 
     Ok(())
