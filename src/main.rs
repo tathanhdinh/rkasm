@@ -1,9 +1,9 @@
-#![feature(fs_read_write)]
+// #![feature(fs_read_write)]
 
 extern crate keystone;
 extern crate tabwriter;
-extern crate syntect;
-extern crate pager;
+#[cfg(target_os = "linux")] extern crate syntect;
+#[cfg(target_os = "linux")] extern crate pager;
 #[macro_use] extern crate clap;
 #[macro_use] extern crate failure;
 
@@ -76,8 +76,11 @@ fn run() -> Result<(), failure::Error> {
 
     let verbose_mode = matches.is_present(ARGUMENT_VERBOSE);
 
-    if verbose_mode {
-        pager::Pager::with_pager("less -R").setup();
+    #[cfg(target_os = "linux")]
+    {
+        if verbose_mode {
+            pager::Pager::with_pager("less -R").setup();
+        }
     }
 
     let asm_mode = if matches.is_present(ARGUMENT_MODE) {
@@ -151,8 +154,7 @@ fn run() -> Result<(), failure::Error> {
         };
 
     let mut assembled_strings: Vec<_> = Vec::new();
-    let mut assembled_ins_string;
-    //  = String::from("");
+    let mut assembled_ins_string = String::from("");
     //  = &String::new();
     let mut ins_base_address = base_address;
     for ins in asm_code {
@@ -198,7 +200,7 @@ fn run() -> Result<(), failure::Error> {
                 // Err(())
                 None
             };
-
+        
         if verbose_mode {
             assembled_strings.push(assembled_ins_string);
         }
@@ -208,28 +210,31 @@ fn run() -> Result<(), failure::Error> {
         }
     }
 
-    if verbose_mode {
-        let asm_results = assembled_strings.join("\r\n");
-        // println!("{}", asm_results.len());
+    #[cfg(target_os = "linux")]
+    {
+        if verbose_mode {
+            let asm_results = assembled_strings.join("\r\n");
+            // println!("{}", asm_results.len());
 
-        let mut tw = tabwriter::TabWriter::new(Vec::new()).padding(4);
-        // let mut tw = tabwriter::TabWriter::new(std::io::stdout()).padding(4);
-        // write!(&mut tw, &asm_results);
-        writeln!(&mut tw, "{}", asm_results)?;
-        tw.flush()?;
+            let mut tw = tabwriter::TabWriter::new(Vec::new()).padding(4);
+            // let mut tw = tabwriter::TabWriter::new(std::io::stdout()).padding(4);
+            // write!(&mut tw, &asm_results);
+            writeln!(&mut tw, "{}", asm_results)?;
+            tw.flush()?;
 
-        let written_strs = String::from_utf8(tw.into_inner()?)?;
-        let written_strs = written_strs.split("\r\n").collect::<Vec<&str>>();
-        let theme_set = syntect::highlighting::ThemeSet::load_defaults();
-        let theme = &theme_set.themes["Solarized (dark)"];
-        let syntax_set = syntect::parsing::SyntaxSet::load_defaults_nonewlines();
-        let syntax = syntax_set.find_syntax_by_extension("asm").unwrap_or_else(|| syntax_set.find_syntax_plain_text());
-        let mut highlighter = syntect::easy::HighlightLines::new(syntax, theme);
-        for line in written_strs {
-            let ranges: Vec<(syntect::highlighting::Style, &str)> = highlighter.highlight(line);
-            let escaped = syntect::util::as_24_bit_terminal_escaped(&ranges[..], true);
-            // println!("{}", escaped);
-            writeln!(&mut std::io::stdout(), "{}", escaped)?;
+            let written_strs = String::from_utf8(tw.into_inner()?)?;
+            let written_strs = written_strs.split("\r\n").collect::<Vec<&str>>();
+            let theme_set = syntect::highlighting::ThemeSet::load_defaults();
+            let theme = &theme_set.themes["Solarized (dark)"];
+            let syntax_set = syntect::parsing::SyntaxSet::load_defaults_nonewlines();
+            let syntax = syntax_set.find_syntax_by_extension("asm").unwrap_or_else(|| syntax_set.find_syntax_plain_text());
+            let mut highlighter = syntect::easy::HighlightLines::new(syntax, theme);
+            for line in written_strs {
+                let ranges: Vec<(syntect::highlighting::Style, &str)> = highlighter.highlight(line);
+                let escaped = syntect::util::as_24_bit_terminal_escaped(&ranges[..], true);
+                // println!("{}", escaped);
+                writeln!(&mut std::io::stdout(), "{}", escaped)?;
+            }
         }
     }
 
