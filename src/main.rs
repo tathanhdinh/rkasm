@@ -154,7 +154,7 @@ fn run() -> Result<(), failure::Error> {
         };
 
     let mut assembled_strings: Vec<_> = Vec::new();
-    let mut assembled_ins_string = String::from("");
+    // let mut assembled_ins_string = String::from("");
     //  = &String::new();
     let mut ins_base_address = base_address;
     for ins in asm_code {
@@ -167,12 +167,12 @@ fn run() -> Result<(), failure::Error> {
                     .collect();
                 let opcode_string = opcode_strs.join(" ");
                 
-                if verbose_mode {
-                    assembled_ins_string = format!("0x{:x}\t{}\t{}", ins_base_address, &opcode_string, ins);
-                }
-                else {
-                    assembled_ins_string = String::from("");
-                }
+                // if verbose_mode {
+                //     assembled_ins_string = format!("0x{:x}\t{}\t{}", ins_base_address, &opcode_string, ins);
+                // }
+                // else {
+                //     assembled_ins_string = String::from("");
+                // }
                 
                 // asm_results.push(asm_result);
                 // Ok(format!("0x{:016x}\t{}\t{}", ins_base_address, &opcode_string, ins))
@@ -183,29 +183,33 @@ fn run() -> Result<(), failure::Error> {
                     output_file.write_all(&assembled_ins.encoding)?;
                 }
 
-                Some(())
+                Ok(format!("0x{:x}\t{}\t{}", ins_base_address, &opcode_string, ins))
             }
             else {
-                assembled_ins_string = 
-                    if verbose_mode {
-                        format!("0x{:x}\t{}\t{}", ins_base_address, "error", ins)
-                    }
-                    else {
-                        String::from("")
-                    };
+                // assembled_ins_string = 
+                //     if verbose_mode {
+                //         format!("0x{:x}\t{}\t{}", ins_base_address, "error", ins)
+                //     }
+                //     else {
+                //         String::from("")
+                //     };
                 
                 // asm_results.push(asm_result);
                 // break;
-                // Err(format!("0x{:016x}\t{}\t{}", ins_base_address, "error", ins))
+                Err(format!("0x{:016x}\t{}\t{}", ins_base_address, "error", ins))
                 // Err(())
-                None
+                // None
             };
+
+        let err_occurred = assembling_result.is_err();
         
         if verbose_mode {
-            assembled_strings.push(assembled_ins_string);
+            // assembled_strings.push(assembled_ins_string);
+            let asmed_str = assembling_result.unwrap_or_else(|v| v);
+            assembled_strings.push(asmed_str);
         }
         
-        if assembling_result.is_none() {
+        if err_occurred {
             break;
         }
     }
