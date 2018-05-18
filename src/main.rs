@@ -35,7 +35,7 @@ fn main() {
                 std::process::exit(0);
             }
             else {
-                println!("{}", err);
+                println!("Error: {}", err);
             }
         }
     }
@@ -79,7 +79,7 @@ fn run() -> Result<(), failure::Error> {
     #[cfg(target_os = "linux")]
     {
         if verbose_mode {
-            pager::Pager::with_pager("less -R").setup();
+            pager::Pager::with_pager("less -R -X").setup();
         }
     }
 
