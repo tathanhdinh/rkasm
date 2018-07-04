@@ -79,7 +79,7 @@ fn run() -> Result<(), failure::Error> {
     #[cfg(target_os = "linux")]
     {
         if verbose_mode {
-            pager::Pager::with_pager("less -R -X").setup();
+            // pager::Pager::with_pager("less -R -X").setup();
         }
     }
 
