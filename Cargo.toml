@@ -2,17 +2,20 @@
 name = "rkasm"
 version = "0.1.0"
 authors = ["tathanhdinh"]
+edition = "2018"
 
 [dependencies]
-keystone = { git = "https://github.com/tathanhdinh/keystone-rs.git" }
+keystone = { path = "../keystone-rs" }
+structopt = "0.2.14"
+zydis = { git = "https://github.com/zyantific/zydis-rs" }
 # keystone = { path = "../keystone-rs" }
-clap = { git = "https://github.com/kbknapp/clap-rs.git" }
-tabwriter = { git = "https://github.com/BurntSushi/tabwriter.git" }
-failure = { git = "https://github.com/rust-lang-nursery/failure.git" }
-syntect = { path = "../syntect" }
-pager = { version = "*" }
+# clap = { git = "https://github.com/kbknapp/clap-rs.git" }
+# tabwriter = { git = "https://github.com/BurntSushi/tabwriter.git" }
+# failure = { git = "https://github.com/rust-lang-nursery/failure.git" }
+# syntect = { path = "../syntect" }
+# pager = { version = "*" }
 
-[target.'cfg(linux)'.dependencies]
+# [target.'cfg(linux)'.dependencies]
 # syntect = { version = "*", optional = true }
 # syntect = { path = "../syntect" }
 # pager = { version = "*" }
